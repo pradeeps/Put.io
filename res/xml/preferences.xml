@@ -1,19 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:sizePreference="http://schemas.android.com/apk/res/com.stevenschoen.putionew" >
+<preference-headers xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:unified="http://schemas.android.com/apk/res-auto" >
 
-    <PreferenceCategory
-        android:summary="Storage"
-        android:title="Storage" >
-        <com.stevenschoen.putionew.SizePreference
-            android:defaultValue="5"
-            android:dialogTitle="Cache size"
-            android:key="maxCacheSizeMb"
-            android:persistent="true"
-            android:summary="How much space (in megabytes) to use for directory listings"
-            android:title="Cache size"
-            sizePreference:maxValue="25"
-            sizePreference:minValue="1" />
-    </PreferenceCategory>
+    <!--
+	/*
+	** Header definitions are identical to android:* except for preferenceRes which should be a reference to a preference xml file
+	** Unlike the native headers these are also used for building the single pane version.
+	*/
+    -->
+    <header
+        unified:fragment="com.stevenschoen.putionew.activities.Preferences$StoragePreferenceFragment"
+        unified:preferenceRes="@xml/preferences_storage"
+        unified:title="Storage" />
 
-</PreferenceScreen>
+</preference-headers>

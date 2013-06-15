@@ -4,7 +4,9 @@ import static com.nineoldandroids.view.ViewPropertyAnimator.animate;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.Iterator;
 import java.util.Locale;
+import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.json.JSONArray;
@@ -29,6 +31,7 @@ import android.content.res.Configuration;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
@@ -36,6 +39,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.ViewPager;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -428,6 +432,31 @@ public class Putio extends SherlockFragmentActivity implements
 			}
 		}
 		new NotificationTask().execute();
+		
+		class CheckPreferencesTask extends AsyncTask<Void, Void, Void> {
+
+			@Override
+			protected Void doInBackground(Void... nothing) {				
+				for (Map.Entry<String,?> entry : sharedPrefs.getAll().entrySet()){
+		            Log.d("asdf", entry.getKey() + ": " + 
+		                                   entry.getValue().toString());
+				}
+				
+				if (!sharedPrefs.contains("downloadLocation")) {
+					Log.d("asdf", "doesn't contain");
+					Log.d("asdf", "putting: " + Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) +
+							File.separator + "put.io");
+					sharedPrefs.edit().putString("downloadLocation",
+							Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) +
+							File.separator + "put.io").commit();
+				} else {
+//					Log.d("asdf", "contains key");
+//					Log.d("asdf", "key is: " + sharedPrefs.getString("downloadLocation", ""));
+				}
+				return null;
+			}
+		}
+		new CheckPreferencesTask().execute();
 	}
 	
 	public void logOut() {

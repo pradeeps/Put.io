@@ -4,7 +4,7 @@
  * aapt tool from the resource data it found.  It
  * should not be modified by hand.
  */
-package com.actionbarsherlock;
+package net.saik0.android.unifiedpreference;
 
 public final class R {
 	public static final class attr {
@@ -35,6 +35,8 @@ public final class R {
 		public static final int background = 0x7f010002;
 		public static final int backgroundSplit = 0x7f010003;
 		public static final int backgroundStacked = 0x7f01004f;
+		public static final int breadCrumbShortTitle = 0x7f010065;
+		public static final int breadCrumbTitle = 0x7f010064;
 		public static final int buttonStyleSmall = 0x7f010019;
 		public static final int customNavigationLayout = 0x7f010050;
 		public static final int displayOptions = 0x7f01004a;
@@ -44,6 +46,7 @@ public final class R {
 		public static final int dropDownListViewStyle = 0x7f01003c;
 		public static final int dropdownListPreferredItemHeight = 0x7f01003e;
 		public static final int expandActivityOverflowButtonDrawable = 0x7f01005f;
+		public static final int fragment = 0x7f010066;
 		public static final int headerBackground = 0x7f010059;
 		public static final int height = 0x7f010004;
 		public static final int homeAsUpIndicator = 0x7f01003b;
@@ -51,6 +54,7 @@ public final class R {
 		public static final int horizontalDivider = 0x7f010057;
 		public static final int icon = 0x7f01004d;
 		public static final int iconifiedByDefault = 0x7f010060;
+		public static final int id = 0x7f010062;
 		public static final int indeterminateProgressStyle = 0x7f010053;
 		public static final int initialActivityCount = 0x7f01005e;
 		public static final int itemBackground = 0x7f01005a;
@@ -64,6 +68,7 @@ public final class R {
 		public static final int logo = 0x7f01004e;
 		public static final int navigationMode = 0x7f010049;
 		public static final int popupMenuStyle = 0x7f01003d;
+		public static final int preferenceRes = 0x7f010067;
 		public static final int preserveIconSpacing = 0x7f01005d;
 		public static final int progressBarPadding = 0x7f010054;
 		public static final int progressBarStyle = 0x7f010052;
@@ -84,6 +89,7 @@ public final class R {
 		public static final int spinnerItemStyle = 0x7f010022;
 		public static final int subtitle = 0x7f01004c;
 		public static final int subtitleTextStyle = 0x7f010001;
+		public static final int summary = 0x7f010063;
 		public static final int textAppearanceLargePopupMenu = 0x7f01001c;
 		public static final int textAppearanceListItemSmall = 0x7f010035;
 		public static final int textAppearanceSearchResultSubtitle = 0x7f010031;
@@ -352,6 +358,7 @@ public final class R {
 		public static final int abs__searchview_description_voice = 0x7f0b000c;
 		public static final int abs__shareactionprovider_share_with = 0x7f0b0006;
 		public static final int abs__shareactionprovider_share_with_application = 0x7f0b0007;
+		public static final int ringtone_silent = 0x7f0b000d;
 	}
 	public static final class style {
 		public static final int Sherlock___TextAppearance_Small = 0x7f0c0046;
@@ -445,6 +452,15 @@ public final class R {
 		public static final int Widget_Sherlock_TextView_SpinnerItem = 0x7f0c0032;
 	}
 	public static final class styleable {
+		public static final int[] PreferenceHeader = { 0x7f01004b, 0x7f01004d, 0x7f010062, 0x7f010063, 0x7f010064, 0x7f010065, 0x7f010066, 0x7f010067 };
+		public static final int PreferenceHeader_breadCrumbShortTitle = 5;
+		public static final int PreferenceHeader_breadCrumbTitle = 4;
+		public static final int PreferenceHeader_fragment = 6;
+		public static final int PreferenceHeader_icon = 1;
+		public static final int PreferenceHeader_id = 2;
+		public static final int PreferenceHeader_preferenceRes = 7;
+		public static final int PreferenceHeader_summary = 3;
+		public static final int PreferenceHeader_title = 0;
 		public static final int[] SherlockActionBar = { 0x7f010000, 0x7f010001, 0x7f010002, 0x7f010003, 0x7f010004, 0x7f010005, 0x7f010049, 0x7f01004a, 0x7f01004b, 0x7f01004c, 0x7f01004d, 0x7f01004e, 0x7f01004f, 0x7f010050, 0x7f010051, 0x7f010052, 0x7f010053, 0x7f010054, 0x7f010055 };
 		public static final int SherlockActionBar_background = 2;
 		public static final int SherlockActionBar_backgroundSplit = 3;

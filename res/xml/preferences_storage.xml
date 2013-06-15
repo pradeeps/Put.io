@@ -1,0 +1,20 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:sizePreference="http://schemas.android.com/apk/res/com.stevenschoen.putionew" >
+
+    <com.stevenschoen.putionew.SizePreference
+        android:defaultValue="5"
+        android:dialogTitle="Cache size"
+        android:key="maxCacheSizeMb"
+        android:persistent="true"
+        android:summary="How much space (in megabytes) to use for directory listings"
+        android:title="Cache size"
+        sizePreference:maxValue="25"
+        sizePreference:minValue="1" />
+
+    <EditTextPreference
+        android:defaultValue="poop"
+        android:key="downloadLocation2"
+        android:summary="Where to put downloaded files"
+        android:title="Download location" />
+
+</PreferenceScreen>
