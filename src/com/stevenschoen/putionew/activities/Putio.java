@@ -78,12 +78,13 @@ import com.stevenschoen.putionew.cast.CastMedia;
 import com.stevenschoen.putionew.cast.CastService;
 import com.stevenschoen.putionew.cast.CastService.CastBinder;
 import com.stevenschoen.putionew.fragments.Account;
+import com.stevenschoen.putionew.fragments.CastBar;
 import com.stevenschoen.putionew.fragments.FileDetails;
 import com.stevenschoen.putionew.fragments.Files;
 import com.stevenschoen.putionew.fragments.Transfers;
 
 public class Putio extends ActionBarActivity implements
-		ActionBar.TabListener, Files.Callbacks, FileDetails.Callbacks, Transfers.Callbacks,
+		ActionBar.TabListener, Files.Callbacks, FileDetails.Callbacks, Transfers.Callbacks, CastBar.Callbacks,
 		MediaRouteAdapter {
 	
 	SectionsPagerAdapter mSectionsPagerAdapter;
@@ -108,7 +109,6 @@ public class Putio extends ActionBarActivity implements
 	CastService castService;
     private MediaRouteButton mMediaRouteButton;
     private MediaRouter.Callback mMediaRouterCallback;
-    private TextView mStatusText;
 	
 	Account accountFragment;
 	Files filesFragment;
@@ -731,14 +731,7 @@ public class Putio extends ActionBarActivity implements
 	protected void onResume() {
 		super.onResume();
 		
-		startCastService();
-	}
-	
-	@Override
-	protected void onPause() {
-		unbindService(mConnection);
-		
-		super.onPause();
+		if (castService == null) startCastService();
 	}
 	
 	@Override
@@ -754,7 +747,7 @@ public class Putio extends ActionBarActivity implements
 			stopService(transfersServiceIntent);
 		}
 		
-		stopService(new Intent(this, CastService.class));
+		unbindService(mConnection);
 		
 	    super.onDestroy();
 	}
@@ -808,9 +801,14 @@ public class Putio extends ActionBarActivity implements
 		
         MediaRouteHelper.registerMinimalMediaRouteProvider(getCastContext(), this);
         
-        mStatusText = (TextView) findViewById(R.id.cast_status);
-        
         supportInvalidateOptionsMenu();
+	}
+	
+	private void initCastBar() {
+		if (getSupportFragmentManager().findFragmentById(R.id.holder_castbar) == null) {
+			getSupportFragmentManager().beginTransaction().replace(
+	        		R.id.holder_castbar, CastBar.instantiate(this, CastBar.class.getName())).commit();
+		}
 	}
 	
 	private void startCastService() {
@@ -829,7 +827,9 @@ public class Putio extends ActionBarActivity implements
 		setCastDevice(device);
 		
         Log.d("asdf", "Available device found: " + deviceName);
-        openSession();
+        castService.openSession();
+        
+        initCastBar();
 	}
 
 	@Override
@@ -842,49 +842,13 @@ public class Putio extends ActionBarActivity implements
 		// TODO Auto-generated method stub
 	}
 	
-	private void openSession() {
-        castService.openSession();
-    }
-	
-	protected void loadMedia(CastMedia media) {
-		castService.loadMedia(media);
-    }
-	
-	public void updateStatus() {
-        this.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                	if (getMessageStream() != null) {
-                        String currentStatus = "Player State: "
-                                + getMessageStream().getPlayerState() + "\n";
-                        currentStatus += "Device " + getCastDevice().getFriendlyName() + "\n";
-                        currentStatus += "Title " + getMessageStream().getTitle() + "\n";
-                        currentStatus += "Current Position: "
-                                + getMessageStream().getStreamPosition() + "\n";
-                        currentStatus += "Duration: "
-                                + getMessageStream().getStreamDuration() + "\n";
-                        currentStatus += "Volume set at: "
-                                + (getMessageStream().getVolume() * 100) + "%\n";
-                        currentStatus += "requestStatus: " + getStatus().getType() + "\n";
-                        mStatusText.setText(currentStatus);
-                    } else {
-                        mStatusText.setText("selected cast device");
-                    }
-                } catch (Exception e) {
-                    Log.e("asdf", "Status request failed: " + e);
-                }
-            }
-        });
-    }
-	
 	@Override
 	public boolean onFDPlay(String url) {
 //		Returns true if the fragment should play it, false if casting
 		if (getCastDevice() == null) {
 			return true;
 		} else {
-			loadMedia(new CastMedia("title", url));
+			castService.loadMedia(new CastMedia("title", url));
 			return false;
 		}
 	}
@@ -955,4 +919,9 @@ public class Putio extends ActionBarActivity implements
 		public void onServiceDisconnected(ComponentName arg0) {
 		}
 	};
+
+	@Override
+	public CastService getCastService() {
+		return castService;
+	}
 }

@@ -83,11 +83,9 @@ public final class Files extends Fragment {
     
     private static Callbacks sDummyCallbacks = new Callbacks() {
         @Override
-        public void onFileSelected(int id) {
-        }
+        public void onFileSelected(int id) { }
         @Override
-        public void onSomethingSelected() {
-        }
+        public void onSomethingSelected() { }
     };
 	
     private Callbacks mCallbacks = sDummyCallbacks;

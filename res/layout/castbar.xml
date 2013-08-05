@@ -2,19 +2,40 @@
     android:layout_width="fill_parent"
     android:layout_height="64dp" >
 
-    <Button
+    <ImageButton
         android:id="@+id/cast_play"
         style="@style/Putio.ButtonBar.Button"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_alignParentRight="true"
+        android:padding="4dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_cast_play" />
+
+    <de.ankri.views.AutoScaleTextView
+        android:id="@+id/cast_playing"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:layout_alignParentRight="true"
-        android:paddingLeft="8dp"
-        android:paddingRight="8dp"
-        android:text="play" />
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_toLeftOf="@id/cast_play"
+        android:gravity="center_vertical"
+        android:text="playing"
+        android:textSize="24sp" />
 
-    <TextView
+    <de.ankri.views.AutoScaleTextView
         android:id="@+id/cast_status"
         android:layout_width="wrap_content"
-        android:layout_height="match_parent" />
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_toLeftOf="@id/cast_play"
+        android:gravity="center_vertical"
+        android:text="status"
+        android:textColor="#808080"
+        android:textSize="16sp" />
 
 </RelativeLayout>

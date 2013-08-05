@@ -20,8 +20,6 @@
         android:id="@+id/holder_castbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" >
-
-        <include layout="@layout/castbar" />
     </FrameLayout>
 
 </LinearLayout>

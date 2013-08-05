@@ -107,14 +107,9 @@ public class FileDetailsActivity extends ActionBarActivity implements FileDetail
 	}
 	
 	@Override
-	protected void onPause() {
-		unbindService(mConnection);
-		
-		super.onPause();
-	}
-	
-	@Override
 	protected void onDestroy() {
+		if (mConnection != null) unbindService(mConnection);
+		
 		super.onDestroy();
 	}
 
