@@ -16,27 +16,35 @@ import android.app.ActivityManager.RunningServiceInfo;
 import android.app.Dialog;
 import android.app.SearchManager;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnCancelListener;
 import android.content.DialogInterface.OnDismissListener;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBar.Tab;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.MediaRouteButton;
+import android.support.v7.media.MediaRouteSelector;
+import android.support.v7.media.MediaRouter;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -47,6 +55,15 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.astuetz.viewpager.extensions.PagerSlidingTabStrip;
+import com.example.castsample.mediaroutedialog.SampleMediaRouteDialogFactory;
+import com.google.cast.ApplicationSession;
+import com.google.cast.CastContext;
+import com.google.cast.CastDevice;
+import com.google.cast.MediaProtocolCommand;
+import com.google.cast.MediaProtocolMessageStream;
+import com.google.cast.MediaRouteAdapter;
+import com.google.cast.MediaRouteHelper;
+import com.google.cast.MediaRouteStateChangeListener;
 import com.nineoldandroids.animation.Animator;
 import com.nineoldandroids.animation.AnimatorListenerAdapter;
 import com.nineoldandroids.view.ViewHelper;
@@ -57,27 +74,20 @@ import com.stevenschoen.putionew.PutioUtils;
 import com.stevenschoen.putionew.R;
 import com.stevenschoen.putionew.SwipeDismissTouchListener;
 import com.stevenschoen.putionew.UIUtils;
+import com.stevenschoen.putionew.cast.CastMedia;
+import com.stevenschoen.putionew.cast.CastService;
+import com.stevenschoen.putionew.cast.CastService.CastBinder;
 import com.stevenschoen.putionew.fragments.Account;
 import com.stevenschoen.putionew.fragments.FileDetails;
 import com.stevenschoen.putionew.fragments.Files;
 import com.stevenschoen.putionew.fragments.Transfers;
 
 public class Putio extends ActionBarActivity implements
-		ActionBar.TabListener, Files.Callbacks, FileDetails.Callbacks, Transfers.Callbacks {
-
-	/**
-	 * The {@link android.support.v4.view.PagerAdapter} that will provide
-	 * fragments for each of the sections. We use a
-	 * {@link android.support.v4.app.FragmentPagerAdapter} derivative, which
-	 * will keep every loaded fragment in memory. If this becomes too memory
-	 * intensive, it may be best to switch to a
-	 * {@link android.support.v4.app.FragmentStatePagerAdapter}.
-	 */
+		ActionBar.TabListener, Files.Callbacks, FileDetails.Callbacks, Transfers.Callbacks,
+		MediaRouteAdapter {
+	
 	SectionsPagerAdapter mSectionsPagerAdapter;
 	
-	/**
-	 * The {@link ViewPager} that will host the section contents.
-	 */
 	ViewPager mViewPager;
 	
 	int requestCode;
@@ -91,6 +101,14 @@ public class Putio extends ActionBarActivity implements
 	public static final String fileDownloadUpdateIntent = "com.stevenschoen.putionew.filedownloadupdate";
 	public static final String transfersUpdateIntent = "com.stevenschoen.putionew.transfersupdate";
 	public static final String noNetworkIntent = "com.stevenschoen.putionew.nonetwork";
+	
+	boolean init = false;
+	boolean initCast = false;
+	
+	CastService castService;
+    private MediaRouteButton mMediaRouteButton;
+    private MediaRouter.Callback mMediaRouterCallback;
+    private TextView mStatusText;
 	
 	Account accountFragment;
 	Files filesFragment;
@@ -206,48 +224,58 @@ public class Putio extends ActionBarActivity implements
 	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		getMenuInflater().inflate(R.menu.putio, menu);
-		
-		MenuItem buttonAdd = menu.findItem(R.id.menu_addtransfers);
-		buttonAdd.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+		if (init) {
+			getMenuInflater().inflate(R.menu.putio, menu);
 			
-			public boolean onMenuItemClick(MenuItem item) {
-				Intent addTransferActivityIntent = new Intent(Putio.this, AddTransfers.class);
-				startActivity(addTransferActivityIntent);
-				return false;
+			if (initCast) {
+				MenuItem buttonCast = menu.findItem(R.id.menu_castbutton);
+				mMediaRouteButton = (MediaRouteButton) MenuItemCompat.getActionView(buttonCast);
+				mMediaRouteButton.setRouteSelector(getMediaRouteSelector());
+		        mMediaRouteButton.setDialogFactory(new SampleMediaRouteDialogFactory());
 			}
-		});
-		
-		MenuItem buttonSettings = menu.findItem(R.id.menu_settings);
-		buttonSettings.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+	        
+			MenuItem buttonAdd = menu.findItem(R.id.menu_addtransfers);
+			buttonAdd.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+				
+				public boolean onMenuItemClick(MenuItem item) {
+					Intent addTransferActivityIntent = new Intent(Putio.this, AddTransfers.class);
+					startActivity(addTransferActivityIntent);
+					return false;
+				}
+			});
 			
-			public boolean onMenuItemClick(MenuItem item) {
-				Intent settingsIntent = new Intent(Putio.this, Preferences.class);
-				Putio.this.startActivity(settingsIntent);
-				return false;
-			}
-		});
-		
-		MenuItem buttonLogout = menu.findItem(R.id.menu_logout);
-		buttonLogout.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+			MenuItem buttonSettings = menu.findItem(R.id.menu_settings);
+			buttonSettings.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+				
+				public boolean onMenuItemClick(MenuItem item) {
+					Intent settingsIntent = new Intent(Putio.this, Preferences.class);
+					Putio.this.startActivity(settingsIntent);
+					return false;
+				}
+			});
 			
-			public boolean onMenuItemClick(MenuItem item) {
-				logOut();
-				return false;
-			}
-		});
-		
-		MenuItem buttonAbout = menu.findItem(R.id.menu_about);
-		buttonAbout.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+			MenuItem buttonLogout = menu.findItem(R.id.menu_logout);
+			buttonLogout.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+				
+				public boolean onMenuItemClick(MenuItem item) {
+					logOut();
+					return false;
+				}
+			});
 			
-			public boolean onMenuItemClick(MenuItem item) {
-				Intent aboutIntent = new Intent(Putio.this, AboutActivity.class);
-				startActivity(aboutIntent);
-				return false;
-			}
-		});
+			MenuItem buttonAbout = menu.findItem(R.id.menu_about);
+			buttonAbout.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+				
+				public boolean onMenuItemClick(MenuItem item) {
+					Intent aboutIntent = new Intent(Putio.this, AboutActivity.class);
+					startActivity(aboutIntent);
+					return false;
+				}
+			});
+			return true;
+		}
 		
-		return true;
+		return false;
 	}
 
 	/**
@@ -302,6 +330,9 @@ public class Putio extends ActionBarActivity implements
 	}
 	
 	private void init() {
+		init = true;
+		startCastService();
+		
 		String token = sharedPrefs.getString("token", null);
 		utils = new PutioUtils(token, sharedPrefs);
 		
@@ -534,12 +565,16 @@ public class Putio extends ActionBarActivity implements
 	
 	@Override
 	public void onFDCancelled() {
-		removeFD(R.anim.slide_out_right);
+		if (UIUtils.isTablet(this)) {
+			removeFD(R.anim.slide_out_right);
+		}
 	}
 
 	@Override
 	public void onFDFinished() {
-		removeFD(R.anim.slide_out_left);
+		if (UIUtils.isTablet(this)) {
+			removeFD(R.anim.slide_out_left);
+		}
 	}
 	
 	@Override
@@ -693,8 +728,21 @@ public class Putio extends ActionBarActivity implements
 	}
 	
 	@Override
+	protected void onResume() {
+		super.onResume();
+		
+		startCastService();
+	}
+	
+	@Override
+	protected void onPause() {
+		unbindService(mConnection);
+		
+		super.onPause();
+	}
+	
+	@Override
 	protected void onDestroy() {
-		super.onDestroy();
 		unregisterReceiver(invalidateReceiver);
 		unregisterReceiver(checkCacheSizeReceiver);
 		if (UIUtils.isTablet(this)) {
@@ -705,6 +753,10 @@ public class Putio extends ActionBarActivity implements
 		if (isTransfersServiceRunning()) {
 			stopService(transfersServiceIntent);
 		}
+		
+		stopService(new Intent(this, CastService.class));
+		
+	    super.onDestroy();
 	}
 
 	@Override
@@ -750,4 +802,157 @@ public class Putio extends ActionBarActivity implements
 			}
 		}
 	}
+	
+	private void initCast() {
+		initCast = true;
+		
+        MediaRouteHelper.registerMinimalMediaRouteProvider(getCastContext(), this);
+        
+        mStatusText = (TextView) findViewById(R.id.cast_status);
+        
+        supportInvalidateOptionsMenu();
+	}
+	
+	private void startCastService() {
+		Intent castServiceIntent = new Intent(this, CastService.class);
+		startService(castServiceIntent);
+		bindService(castServiceIntent, mConnection, 0);
+	}
+	
+	public boolean getCanCast() {
+		return (getCastDevice() != null);
+	}
+
+	@Override
+	public void onDeviceAvailable(CastDevice device, String deviceName,
+			MediaRouteStateChangeListener listener) {
+		setCastDevice(device);
+		
+        Log.d("asdf", "Available device found: " + deviceName);
+        openSession();
+	}
+
+	@Override
+	public void onSetVolume(double volume) {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public void onUpdateVolume(double volume) {
+		// TODO Auto-generated method stub
+	}
+	
+	private void openSession() {
+        castService.openSession();
+    }
+	
+	protected void loadMedia(CastMedia media) {
+		castService.loadMedia(media);
+    }
+	
+	public void updateStatus() {
+        this.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                	if (getMessageStream() != null) {
+                        String currentStatus = "Player State: "
+                                + getMessageStream().getPlayerState() + "\n";
+                        currentStatus += "Device " + getCastDevice().getFriendlyName() + "\n";
+                        currentStatus += "Title " + getMessageStream().getTitle() + "\n";
+                        currentStatus += "Current Position: "
+                                + getMessageStream().getStreamPosition() + "\n";
+                        currentStatus += "Duration: "
+                                + getMessageStream().getStreamDuration() + "\n";
+                        currentStatus += "Volume set at: "
+                                + (getMessageStream().getVolume() * 100) + "%\n";
+                        currentStatus += "requestStatus: " + getStatus().getType() + "\n";
+                        mStatusText.setText(currentStatus);
+                    } else {
+                        mStatusText.setText("selected cast device");
+                    }
+                } catch (Exception e) {
+                    Log.e("asdf", "Status request failed: " + e);
+                }
+            }
+        });
+    }
+	
+	@Override
+	public boolean onFDPlay(String url) {
+//		Returns true if the fragment should play it, false if casting
+		if (getCastDevice() == null) {
+			return true;
+		} else {
+			loadMedia(new CastMedia("title", url));
+			return false;
+		}
+	}
+	
+	private CastContext getCastContext() {
+		return castService.getCastContext();
+	}
+	
+	public CastDevice getCastDevice() {
+		return castService.getCastDevice();
+	}
+	
+	public void setCastDevice(CastDevice cd) {
+		castService.setCastDevice(cd);
+	}
+	
+	public ApplicationSession getSession() {
+		return castService.getSession();
+	}
+	
+	public CastMedia getCastMedia() {
+		return castService.getCastMedia();
+	}
+	
+	public void setCastMedia(CastMedia media) {
+		castService.setCastMedia(media);
+	}
+	
+	public MediaProtocolMessageStream getMessageStream() {
+		return castService.getMessageStream();
+	}
+	
+	public void setMessageStream(MediaProtocolMessageStream stream) {
+		castService.setMessageStream(stream);
+	}
+	
+	public MediaRouter getMediaRouter() {
+		return castService.getMediaRouter();
+	}
+	
+	public void setMediaRouter(MediaRouter router) {
+		castService.setMediaRouter(router);
+	}
+	
+	public MediaRouteSelector getMediaRouteSelector() {
+		return castService.getMediaRouteSelector();
+	}
+	
+	public void setMediaRouteSelector(MediaRouteSelector selector) {
+		castService.setMediaRouteSelector(selector);
+	}
+	
+	public MediaProtocolCommand getStatus() {
+		return castService.getStatus();
+	}
+	
+	private ServiceConnection mConnection = new ServiceConnection() {
+
+		@Override
+		public void onServiceConnected(ComponentName className, IBinder service) {
+			CastBinder binder = (CastBinder) service;
+			castService = binder.getService();
+			
+			initCast();
+		}
+
+		@Override
+		public void onServiceDisconnected(ComponentName arg0) {
+		}
+	};
 }

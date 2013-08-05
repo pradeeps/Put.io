@@ -109,6 +109,9 @@
 
         <activity android:name="com.ipaulpro.afilechooser.FileChooserActivity" >
         </activity>
+
+        <service android:name=".cast.CastService" >
+        </service>
     </application>
 
 </manifest>

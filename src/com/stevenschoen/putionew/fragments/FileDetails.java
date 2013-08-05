@@ -67,15 +67,16 @@ public class FileDetails extends Fragment {
     public interface Callbacks {
         public void onFDCancelled();
         public void onFDFinished();
+        public boolean onFDPlay(String url);
     }
 
     private static Callbacks sDummyCallbacks = new Callbacks() {
         @Override
-        public void onFDCancelled() {
-        }
+        public void onFDCancelled() { }
         @Override
-        public void onFDFinished() {
-        }
+        public void onFDFinished() { }
+        @Override
+        public boolean onFDPlay(String url) { return true; }
     };
 	
     private Callbacks mCallbacks = sDummyCallbacks;
@@ -601,7 +602,10 @@ public class FileDetails extends Fragment {
 			} else {
 				type = PutioUtils.TYPE_VIDEO;
 			}
-			utils.stream(getActivity(), finalUrl, type);
+			
+			if (mCallbacks.onFDPlay(finalUrl)) {
+				utils.stream(getActivity(), finalUrl, type);
+			}
 		}
 	}
 	
@@ -625,7 +629,6 @@ public class FileDetails extends Fragment {
 		outState.putParcelable("newFileData", newFileData);
 		if (imagePreviewBitmap != null) {
 			outState.putParcelable("imagePreviewBitmap", imagePreviewBitmap);
-		} else {
 		}
 		
 		super.onSaveInstanceState(outState);
@@ -635,9 +638,7 @@ public class FileDetails extends Fragment {
     public void onAttach(Activity activity) {
         super.onAttach(activity);
 
-        if (UIUtils.isTablet(getActivity())) {
-        	mCallbacks = (Callbacks) activity;
-        }
+        mCallbacks = (Callbacks) activity;
     }
     
     @Override

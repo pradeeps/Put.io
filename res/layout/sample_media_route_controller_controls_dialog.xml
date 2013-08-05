@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/Putio.ButtonBar"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:gravity="center_horizontal"
+    android:orientation="horizontal"
+    android:showDividers="middle" >
+
+    <Button
+        android:id="@+id/skip_back_button"
+        style="@style/Putio.ButtonBar.Button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="back" />
+
+    <Button
+        android:id="@+id/mute_button"
+        style="@style/Putio.ButtonBar.Button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="mute" />
+
+    <Button
+        android:id="@+id/skip_forward_button"
+        style="@style/Putio.ButtonBar.Button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="forward" />
+
+</LinearLayout>

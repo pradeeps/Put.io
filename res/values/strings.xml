@@ -1,6 +1,7 @@
 <resources>
 
     <string name="app_name">Put.io</string>
+    <string name="cast_name">putiostevenschoen</string>
 
     <!-- Short commands and responses -->
     <string name="yes">Yes</string>
