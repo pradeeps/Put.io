@@ -9,12 +9,12 @@ import android.util.Log;
 import com.google.cast.MediaRouteHelper;
 
 public class MyMediaRouterCallback extends MediaRouter.Callback {
-	private CastService cast;
+	private CastService castService;
 	
 	public MyMediaRouterCallback(CastService cast) {
 		super();
 		
-		this.cast = cast;
+		this.castService = cast;
 	}
 
 	@Override
@@ -25,10 +25,10 @@ public class MyMediaRouterCallback extends MediaRouter.Callback {
 	@Override
 	public void onRouteUnselected(MediaRouter router, RouteInfo route) {
 		try {
-			if (cast.getSession() != null) {
+			if (castService.getSession() != null) {
 				Log.d("asdf", "Ending session and stopping application");
-				cast.getSession().setStopApplicationWhenEnding(true);
-				cast.getSession().endSession();
+				castService.getSession().setStopApplicationWhenEnding(true);
+				castService.getSession().endSession();
 			} else {
 				Log.e("asdf", "onRouteUnselected: mSession is null");
 			}
@@ -39,7 +39,8 @@ public class MyMediaRouterCallback extends MediaRouter.Callback {
 			Log.e("asdf", "onRouteUnselected:");
 			e.printStackTrace();
 		}
-		cast.setMessageStream(null);
-		cast.setCastDevice(null);
+		castService.stopSelf();
+//		castService.setMessageStream(null);
+//		castService.setCastDevice(null);
 	}
 }

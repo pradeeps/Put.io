@@ -34,7 +34,7 @@
     </style>
 
     <style name="Putio.ActionBar" parent="@style/Widget.AppCompat.Light.ActionBar.Solid.Inverse">
-        <item name="android:windowNoTitle">true</item>\
+        <item name="android:windowNoTitle">true</item>
     </style>
 
     <style name="Putio.ActionButton" parent="Widget.AppCompat.ActionButton">

@@ -5,6 +5,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import android.app.Service;
+import android.app.backup.RestoreObserver;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
@@ -45,42 +46,42 @@ public class CastService extends Service {
     MyMediaRouterCallback mMediaRouterCallback;
     
     @Override
-    public void onCreate() {
-    	super.onCreate();
-    	
-    	try {
-            mCastContext = new CastContext(getApplicationContext());
-        } catch (IllegalArgumentException e) {
-            e.printStackTrace();
-        }
-        mMetaData = new ContentMetadata();
-        mMediaRouter = MediaRouter.getInstance(getApplicationContext());
-        mMediaRouteSelector = MediaRouteHelper
-                .buildMediaRouteSelector(MediaRouteHelper.CATEGORY_CAST);
-        mMediaRouterCallback = new MyMediaRouterCallback(this);
-        getMediaRouter().addCallback(getMediaRouteSelector(), mMediaRouterCallback,
-                MediaRouter.CALLBACK_FLAG_REQUEST_DISCOVERY);
-        mMessageStream = new MediaProtocolMessageStream();
-    }
-    
-    @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
     	super.onStartCommand(intent, flags, startId);
-        
+    	
+    	init();
     	return START_STICKY;
     }
     
-    @Override
-    public void onDestroy() {
-    	try {
-    		if (mSession != null) mSession.endSession();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-    	mCastContext.dispose();
-    	
-    	super.onDestroy();
+    private void init() {
+    	if (mCastContext == null) {
+    		try {
+                mCastContext = new CastContext(getApplicationContext());
+            } catch (IllegalArgumentException e) {
+                e.printStackTrace();
+            }
+            mMetaData = new ContentMetadata();
+            mMediaRouter = MediaRouter.getInstance(getApplicationContext());
+            mMediaRouteSelector = MediaRouteHelper
+                    .buildMediaRouteSelector(MediaRouteHelper.CATEGORY_CAST);
+            mMediaRouterCallback = new MyMediaRouterCallback(this);
+            getMediaRouter().addCallback(getMediaRouteSelector(), mMediaRouterCallback,
+                    MediaRouter.CALLBACK_FLAG_REQUEST_DISCOVERY);
+            mMessageStream = new MediaProtocolMessageStream();
+    	}
     }
+    
+//    @Override
+//    public void onDestroy() {
+//    	try {
+//    		if (mSession != null) mSession.endSession();
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
+//    	mCastContext.dispose();
+//    	
+//    	super.onDestroy();
+//    }
     
 	public void openSession() {
 		if (mSession == null) {
@@ -89,7 +90,7 @@ public class CastService extends Service {
 		    // TODO: The below lines allow you to specify either that your application uses the default
 		    // implementations of the Notification and Lock Screens, or that you will be using your own.
 		    int flags = 0;
-		
+		    
 		    // Comment out the below line if you are not writing your own Notification Screen.
 		    // flags |= ApplicationSession.FLAG_DISABLE_NOTIFICATION;
 		
@@ -193,6 +194,30 @@ public class CastService extends Service {
 		
 		mMedia = null;
 	}
+	
+	public void play() {
+        if (mMessageStream != null) {
+			try {
+				mMessageStream.resume();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		} else {
+		    Log.e("asdf", "onClick-Play - mMPMS==null");
+		}
+	}
+	
+	public void pause() {
+		try {
+			if (mMessageStream != null) {
+				mMessageStream.stop();
+			} else {
+				Log.e("asdf", "onClick-Play - mMPMS==null");
+			}
+		} catch (IOException e) {
+			Log.e("asdf", "Failed to send stop comamnd.");
+		}
+	}
 
 	/**
 	 * Returns the CastContext associated with this application's context.
@@ -267,18 +292,22 @@ public class CastService extends Service {
 	
 	@Override
 	public boolean onUnbind(final Intent intent) {
-		Log.d("asdf", "onUnbind");
-		bound = false;
-		Timer timer = new Timer();
-		timer.schedule(new TimerTask() {
-			@Override
-			public void run() {
-				if (bound == false) {
-					Log.d("asdf", "stopping");
-					stopSelf();
-				}
-			}
-		}, 5000);
+        Log.d("asdf", "onUnbind called, ending session if session exists");
+        if (mSession != null) {
+            try {
+                if (!mSession.hasStopped()) {
+                    mSession.endSession();
+                }
+            } catch (IOException e) {
+                Log.e("asdf", "Failed to end session.");
+            }
+        }
+        mSession = null;
+        super.onDestroy();
+    	mMediaRouter.removeCallback(mMediaRouterCallback);
+    	mCastContext.dispose();
+    	
+		stopSelf();
 		return false;
 	}
 }

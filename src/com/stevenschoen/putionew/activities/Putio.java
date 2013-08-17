@@ -42,8 +42,6 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBar.Tab;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.MediaRouteButton;
-import android.support.v7.media.MediaRouteSelector;
-import android.support.v7.media.MediaRouter;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -56,11 +54,7 @@ import android.widget.TextView;
 
 import com.astuetz.viewpager.extensions.PagerSlidingTabStrip;
 import com.example.castsample.mediaroutedialog.SampleMediaRouteDialogFactory;
-import com.google.cast.ApplicationSession;
-import com.google.cast.CastContext;
 import com.google.cast.CastDevice;
-import com.google.cast.MediaProtocolCommand;
-import com.google.cast.MediaProtocolMessageStream;
 import com.google.cast.MediaRouteAdapter;
 import com.google.cast.MediaRouteHelper;
 import com.google.cast.MediaRouteStateChangeListener;
@@ -74,11 +68,11 @@ import com.stevenschoen.putionew.PutioUtils;
 import com.stevenschoen.putionew.R;
 import com.stevenschoen.putionew.SwipeDismissTouchListener;
 import com.stevenschoen.putionew.UIUtils;
+import com.stevenschoen.putionew.cast.CastBar;
 import com.stevenschoen.putionew.cast.CastMedia;
 import com.stevenschoen.putionew.cast.CastService;
 import com.stevenschoen.putionew.cast.CastService.CastBinder;
 import com.stevenschoen.putionew.fragments.Account;
-import com.stevenschoen.putionew.fragments.CastBar;
 import com.stevenschoen.putionew.fragments.FileDetails;
 import com.stevenschoen.putionew.fragments.Files;
 import com.stevenschoen.putionew.fragments.Transfers;
@@ -108,7 +102,6 @@ public class Putio extends ActionBarActivity implements
 	
 	CastService castService;
     private MediaRouteButton mMediaRouteButton;
-    private MediaRouter.Callback mMediaRouterCallback;
 	
 	Account accountFragment;
 	Files filesFragment;
@@ -230,7 +223,7 @@ public class Putio extends ActionBarActivity implements
 			if (initCast) {
 				MenuItem buttonCast = menu.findItem(R.id.menu_castbutton);
 				mMediaRouteButton = (MediaRouteButton) MenuItemCompat.getActionView(buttonCast);
-				mMediaRouteButton.setRouteSelector(getMediaRouteSelector());
+				mMediaRouteButton.setRouteSelector(castService.getMediaRouteSelector());
 		        mMediaRouteButton.setDialogFactory(new SampleMediaRouteDialogFactory());
 			}
 	        
@@ -366,8 +359,7 @@ public class Putio extends ActionBarActivity implements
 						JSONObject obj = notifications.getJSONObject(i);
 //						prime numbers yay
 						boolean show = sharedPrefs.getInt("readNotifs", 1) % obj.getInt("id") != 0;
-						notifs[i] = new PutioNotification(obj.getInt("id"), obj.getString("text"),
-								show);
+						notifs[i] = new PutioNotification(obj.getInt("id"), obj.getString("text"), show);
 					}
 					return notifs;
 				} catch (Exception e) {
@@ -799,15 +791,18 @@ public class Putio extends ActionBarActivity implements
 	private void initCast() {
 		initCast = true;
 		
-        MediaRouteHelper.registerMinimalMediaRouteProvider(getCastContext(), this);
+        MediaRouteHelper.registerMinimalMediaRouteProvider(castService.getCastContext(), this);
         
         supportInvalidateOptionsMenu();
 	}
 	
 	private void initCastBar() {
-		if (getSupportFragmentManager().findFragmentById(R.id.holder_castbar) == null) {
+		if (getSupportFragmentManager().findFragmentByTag("castbar") != null) {
 			getSupportFragmentManager().beginTransaction().replace(
-	        		R.id.holder_castbar, CastBar.instantiate(this, CastBar.class.getName())).commit();
+	        		R.id.holder_castbar,
+	        		CastBar.instantiate(this, CastBar.class.getName()),
+	        		"castbar")
+	        		.commit();
 		}
 	}
 	
@@ -818,13 +813,13 @@ public class Putio extends ActionBarActivity implements
 	}
 	
 	public boolean getCanCast() {
-		return (getCastDevice() != null);
+		return (castService.getCastDevice() != null);
 	}
 
 	@Override
 	public void onDeviceAvailable(CastDevice device, String deviceName,
 			MediaRouteStateChangeListener listener) {
-		setCastDevice(device);
+		castService.setCastDevice(device);
 		
         Log.d("asdf", "Available device found: " + deviceName);
         castService.openSession();
@@ -845,64 +840,12 @@ public class Putio extends ActionBarActivity implements
 	@Override
 	public boolean onFDPlay(String url) {
 //		Returns true if the fragment should play it, false if casting
-		if (getCastDevice() == null) {
+		if (!getCanCast()) {
 			return true;
 		} else {
 			castService.loadMedia(new CastMedia("title", url));
 			return false;
 		}
-	}
-	
-	private CastContext getCastContext() {
-		return castService.getCastContext();
-	}
-	
-	public CastDevice getCastDevice() {
-		return castService.getCastDevice();
-	}
-	
-	public void setCastDevice(CastDevice cd) {
-		castService.setCastDevice(cd);
-	}
-	
-	public ApplicationSession getSession() {
-		return castService.getSession();
-	}
-	
-	public CastMedia getCastMedia() {
-		return castService.getCastMedia();
-	}
-	
-	public void setCastMedia(CastMedia media) {
-		castService.setCastMedia(media);
-	}
-	
-	public MediaProtocolMessageStream getMessageStream() {
-		return castService.getMessageStream();
-	}
-	
-	public void setMessageStream(MediaProtocolMessageStream stream) {
-		castService.setMessageStream(stream);
-	}
-	
-	public MediaRouter getMediaRouter() {
-		return castService.getMediaRouter();
-	}
-	
-	public void setMediaRouter(MediaRouter router) {
-		castService.setMediaRouter(router);
-	}
-	
-	public MediaRouteSelector getMediaRouteSelector() {
-		return castService.getMediaRouteSelector();
-	}
-	
-	public void setMediaRouteSelector(MediaRouteSelector selector) {
-		castService.setMediaRouteSelector(selector);
-	}
-	
-	public MediaProtocolCommand getStatus() {
-		return castService.getStatus();
 	}
 	
 	private ServiceConnection mConnection = new ServiceConnection() {

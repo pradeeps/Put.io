@@ -1,7 +1,8 @@
-package com.stevenschoen.putionew.fragments;
+package com.stevenschoen.putionew.cast;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.text.Html;
 import android.util.Log;
@@ -12,7 +13,6 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 
 import com.stevenschoen.putionew.R;
-import com.stevenschoen.putionew.cast.CastService;
 
 import de.ankri.views.AutoScaleTextView;
 
@@ -31,6 +31,27 @@ public class CastBar extends Fragment {
 	
 	private AutoScaleTextView textStatus, textPlaying;
 	private ImageButton buttonPlayPause;
+
+	private Handler updateStatusHandler;
+	
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		
+        Log.d("asdf", "Starting statusRunner thread");
+        updateStatusHandler = new Handler();
+        updateStatusHandler.post(new Runnable() {
+			@Override
+			public void run() {
+				try {
+	                updateStatus();
+	                updateStatusHandler.postDelayed(this, 1500);
+	            } catch (Exception e) {
+	                Log.e("asdf", "Thread interrupted: " + e);
+	            }
+			}
+        });
+	}
 	
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -135,5 +156,12 @@ public class CastBar extends Fragment {
             castString += "</font>";
             textPlaying.setText(Html.fromHtml(castString));
         }
+    }
+    
+    @Override
+    public void onDestroy() {
+    	updateStatusHandler.removeCallbacks(null);
+    	
+    	super.onDestroy();
     }
 }
