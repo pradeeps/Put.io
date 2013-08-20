@@ -77,7 +77,6 @@ public class FileDetailsActivity extends ActionBarActivity implements FileDetail
 		
 		MenuItem buttonCast = menu.findItem(R.id.menu_castbutton);
 		mMediaRouteButton = (MediaRouteButton) MenuItemCompat.getActionView(buttonCast);
-		mMediaRouteButton.setRouteSelector(castService.getMediaRouteSelector());
         mMediaRouteButton.setDialogFactory(new SampleMediaRouteDialogFactory());
 		
 		return true;
@@ -95,7 +94,8 @@ public class FileDetailsActivity extends ActionBarActivity implements FileDetail
 		return (super.onOptionsItemSelected(menuItem));
 	}
 	
-	private void initCast() {		
+	private void initCast() {
+		mMediaRouteButton.setRouteSelector(castService.getMediaRouteSelector());
 		MediaRouteHelper.registerMinimalMediaRouteProvider(castService.getCastContext(), this);
 		
 		Log.d("asdf", "callback added");

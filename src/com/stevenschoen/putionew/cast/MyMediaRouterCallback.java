@@ -29,6 +29,7 @@ public class MyMediaRouterCallback extends MediaRouter.Callback {
 				Log.d("asdf", "Ending session and stopping application");
 				castService.getSession().setStopApplicationWhenEnding(true);
 				castService.getSession().endSession();
+				castService.setCastMedia(null);
 			} else {
 				Log.e("asdf", "onRouteUnselected: mSession is null");
 			}
@@ -39,7 +40,6 @@ public class MyMediaRouterCallback extends MediaRouter.Callback {
 			Log.e("asdf", "onRouteUnselected:");
 			e.printStackTrace();
 		}
-		castService.stopSelf();
 //		castService.setMessageStream(null);
 //		castService.setCastDevice(null);
 	}

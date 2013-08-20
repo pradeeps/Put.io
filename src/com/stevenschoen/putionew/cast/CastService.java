@@ -1,11 +1,8 @@
 package com.stevenschoen.putionew.cast;
 
 import java.io.IOException;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import android.app.Service;
-import android.app.backup.RestoreObserver;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
@@ -20,6 +17,7 @@ import com.google.cast.CastDevice;
 import com.google.cast.ContentMetadata;
 import com.google.cast.MediaProtocolCommand;
 import com.google.cast.MediaProtocolMessageStream;
+import com.google.cast.MediaProtocolMessageStream.PlayerState;
 import com.google.cast.MediaRouteHelper;
 import com.google.cast.SessionError;
 import com.stevenschoen.putionew.R;
@@ -292,22 +290,26 @@ public class CastService extends Service {
 	
 	@Override
 	public boolean onUnbind(final Intent intent) {
-        Log.d("asdf", "onUnbind called, ending session if session exists");
-        if (mSession != null) {
-            try {
-                if (!mSession.hasStopped()) {
-                    mSession.endSession();
+        Log.d("asdf", "onUnbind called");
+        if (mMessageStream.getPlayerState() != PlayerState.PLAYING) {
+            if (mSession != null) {
+                try {
+                    if (!mSession.hasStopped()) {
+                        mSession.endSession();
+                    }
+                } catch (IOException e) {
+                    Log.e("asdf", "Failed to end session.");
                 }
-            } catch (IOException e) {
-                Log.e("asdf", "Failed to end session.");
             }
+            mSession = null;
+            super.onDestroy();
+        	mMediaRouter.removeCallback(mMediaRouterCallback);
+        	mCastContext.dispose();
+        	
+    		stopSelf();
+    		return true;
         }
-        mSession = null;
-        super.onDestroy();
-    	mMediaRouter.removeCallback(mMediaRouterCallback);
-    	mCastContext.dispose();
-    	
-		stopSelf();
-		return false;
+
+		return true;
 	}
 }
